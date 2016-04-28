@@ -21,7 +21,6 @@ public class OrderDaoImpl implements OrderDao{
 	String OrderTable_name    = "OrderTable";
 	String FacilityTable_name = "Facility";
 	String UserTable_name     = "User";
-	String FacStateTable_name    = "HaveAccess";
 	String ColName = "(DeviceName,DeviceNumber,Type,DataValue,Battery,ReceiveTime)";
 	
 	
@@ -41,7 +40,7 @@ public class OrderDaoImpl implements OrderDao{
 	public OrderEworld GiveOrder() throws Exception {
 		OrderEworld ordermodel = new OrderEworld();
 		//String condition = "update "+FacStateTable_name+"set Online = 'ON' where Fnumber = '"+fstate.geteId()+"'";
-		String condition = "select * from"+OrderTable_name+"where "+colname_OrderPerform+"='N' limit 0,1";
+		String condition = "select * from "+OrderTable_name+" where "+colname_OrderPerform+"='N' limit 0,1";
 		ordermodel = selectTheTable(condition);
 		if(ordermodel == null)
 		{
@@ -52,8 +51,11 @@ public class OrderDaoImpl implements OrderDao{
 
 	@Override
 	public boolean ChangeOrderState() throws Exception {
-		
-		return false;
+		java.util.Date datetime = new java.util.Date(System.currentTimeMillis());	
+		java.sql.Timestamp timeNow = new java.sql.Timestamp(datetime.getTime());
+		System.out.println(timeNow);
+		String condition = "update "+OrderTable_name+" set OrderPerform = 'Y' where "+colname_OrderPerform+"='N'";				
+		return UpdateTheTable(condition);
 	}
 	
 	
@@ -74,7 +76,6 @@ public class OrderDaoImpl implements OrderDao{
 		try {
 			Class.forName("com.mysql.jdbc.Driver");
 		} catch (ClassNotFoundException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 		DB_Connection DB_C = new DB_Connection();;
@@ -92,7 +93,8 @@ public class OrderDaoImpl implements OrderDao{
 					ordermodel.setFacNumber(facInt);
 				//获取命令的
 				String OrderNumber = rs.getString(colname_OrderNumber);
-					byte order = Byte.valueOf(OrderNumber);
+					int ornumberint = Integer.valueOf(OrderNumber, 16);
+					byte order = (byte)ornumberint;
 					ordermodel.setOrder(order);
 				}
 			////////////////////////////////////////////
@@ -103,6 +105,38 @@ public class OrderDaoImpl implements OrderDao{
 			return null;
 		}
 		return ordermodel;
+	}
+	
+	
+	/**
+	 * 更新Order表
+	 * @param condition
+	 * @return
+	 */
+	
+	
+	public static boolean UpdateTheTable(String condition){
+		Connection con;
+		Statement sql;
+		try {
+			Class.forName("com.mysql.jdbc.Driver");
+		} catch (ClassNotFoundException e) {
+			e.printStackTrace();
+		}
+		DB_Connection DB_C = new DB_Connection();;
+		String uri = DB_C.getConnection_2();
+
+		try{
+			con = DriverManager.getConnection(uri);
+			sql = con.createStatement();
+			sql.executeUpdate(condition);
+			con.close();
+		}catch(SQLException exp){
+			String backNews=""+exp;
+			System.out.println(backNews);
+			return false;
+		}
+		return true;
 	}
 
 

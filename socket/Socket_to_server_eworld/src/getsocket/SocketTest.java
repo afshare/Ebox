@@ -7,6 +7,10 @@ import com.allen.dao.socketDaoImpl.FacilityStateDAOImpl;
 import com.allen.model.FacilityEworldState;
 import com.allen.server.socketManager.SocketManager;
 import com.allen.server.socketManagerImpl.SocketManagerImpl;
+
+import java.util.Date;  
+import java.util.Timer;  
+import java.util.TimerTask;  
  
 
 /**
@@ -24,7 +28,7 @@ import com.allen.server.socketManagerImpl.SocketManagerImpl;
 
 public class SocketTest extends Thread{
 
-	
+	final long timeInterval = 1000;
 	ServerSocket server = null; //服务器的操作
 	Socket scwifi = null;	    //客户端的操作
 	BufferedReader bi  = null;  //读取的数据流
@@ -62,6 +66,8 @@ public class SocketTest extends Thread{
 	
 	public void run()
 	{
+		ServerThread th;
+		
 		while(true)											//一直监听接入的wifi模块
 		{
 			System.out.println("Listennin...");
@@ -73,8 +79,14 @@ public class SocketTest extends Thread{
 //				sockettofac[counterSocket].socket = scwifi;
 				sockettofac[counterSocket].SocketID = counterSocket;//将得到的连接的ID记录下来
 				System.out.println("Get access~"+sockettofac[counterSocket].socket.getInetAddress());
-				ServerThread th = new ServerThread(sockettofac[counterSocket]);//将获得的连接传入线程
+				th = new ServerThread(sockettofac[counterSocket]);//将获得的连接传入线程
 				th.start();
+				
+				//////////////////////////////////////////
+				//测试定时发送函数
+				//////////////////////////////////////////
+				th.test1();
+				
 				
 				counterSocket++;//获得一个socket连接
 				
@@ -94,6 +106,7 @@ public class SocketTest extends Thread{
 		for(int i = 0;i<10;i++)//初始化SocketToFac数组
 			sockettofac[i] = new SocketToFac();
 		new SocketTest().start();
+		
 	}
 	
 	
@@ -102,12 +115,30 @@ public class SocketTest extends Thread{
 		Socket sk = null;		//socket对象
 		int SocketID = 0;		//socketID
 		FacilityStateDAO fsdao = new FacilityStateDAOImpl();//用于操作监控状态
+		SocketManager skm  = new SocketManagerImpl();
 		
 		public ServerThread(SocketToFac sktofac)
 		{
 			this.sk  = sktofac.socket;
 			SocketID = sktofac.SocketID;
 		}
+		/////////////////////////////////////////////////////////////////////
+		 // 2:5000毫秒后，执行任务，以后每隔10000毫秒再执行一次任务(无限执行)(10s)  
+		////////////////////////////////////////////////////////////////////
+	    public void test1() {  
+	        new Timer().schedule(new TimerTask() {  
+	           
+	            public void run() {  
+	            	
+					/*测试用户给命令的代码*/
+						skm.GiveOrder();//向发来的设备发送order
+	            }  
+	        }, 5000, 10000);  
+	    }
+	    
+	    //////////////////////////////////////////////////////////////////////////
+	    //进程执行。
+	    //////////////////////////////////////////////////////////////////////////
 		public void run()
 		{
 			try {
@@ -115,23 +146,68 @@ public class SocketTest extends Thread{
 				byte getData[] = new byte[theSize];			//建立一个20个字节的bao
 				InputStream isTemplet = null;
 				OutputStream osTemplet = null;
+				boolean isgetConnecting = false;
 				while(true)
 				{
-				int getSizeCounterNow = getSizeCounter;	
+					
+					
+					
+					
+					
+					
+					///////////////////////////////////////////////////////////
+					////
+					///////////////////////////////////////////////////////////
+//					Thread.sleep(timeInterval);
+					///////////////////////////////////////////////////////////
+					////
+					///////////////////////////////////////////////////////////
+				int getSizeCounterNow = getSizeCounter;
+
+				if(isgetConnecting == false)
+				{
+					try{
+						osTemplet = sk.getOutputStream();
+		//				osTemplet = sockettofac[0].socket.getOutputStream();//用同一个socket接收用来测试
+						isTemplet = sk.getInputStream();		//得到wifi模块接收数据的数据流
+	//					sk.sendUrgentData(0xff);				//一直发送紧急数据检查是否连接
+						System.out.println("Connecting...");
+						isgetConnecting = true;
+					}
+					catch(IOException e)
+					{
+						e.printStackTrace();
+						System.out.println("Broken in 1.1");
+						connect = false;
+						break;
+					}
+				}
+				
+				
+				//尝试发送一个字节个模块，判断是否还连接成功。
 				try{
-					osTemplet = sk.getOutputStream();
-	//				osTemplet = sockettofac[0].socket.getOutputStream();//用同一个socket接收用来测试
-					isTemplet = sk.getInputStream();		//得到wifi模块接收数据的数据流
-					sk.sendUrgentData(0xff);				//一直发送紧急数据检查是否连接
-					System.out.println("Connecting...");
+					sk.sendUrgentData(0x33);			//一直发送紧急数据检查是否连接,如果是连接了的就继续发送数据
+
 				}
 				catch(IOException e)
 				{
-					e.printStackTrace();
-					System.out.println("Broken in 1.1");
+//					e.printStackTrace();
+					System.out.println("Broken in 0.11111111111111111111111111");
 					connect = false;
 					break;
 				}
+				
+				
+				
+				
+				
+				
+				
+				
+				
+				
+				
+				
 				if(sk.isConnected())					//需要先判断是否还在连接中在进行数据的发送
 				{
 					try
@@ -151,13 +227,14 @@ public class SocketTest extends Thread{
 				////////////////在下面写将接入到的数据存入数据库的函数
 				////////////////////////////////////////////////////
 				
-				SocketManager skm  = new SocketManagerImpl();
+//				SocketManager skm  = new SocketManagerImpl();
 				skm.Add(getData,SocketID);
 				/*测试用户给命令的代码*/
 				System.out.println(counterSocket);
 
-					byte[] order = {0x01,0x02,0x03,0x04};
-					if(!skm.GiveOrder(sockettofac[SocketID].FaitityNumber, order))//向发来的设备发送order
+//					byte[] order = {0x01,0x02,0x03,0x04};
+//					if(!skm.GiveOrder(sockettofac[SocketID].FaitityNumber, order))//向发来的设备发送order
+					if(!skm.GiveOrder())//向发来的设备发送order
 						System.out.println("Order Fail");
 					System.out.println(sockettofac[SocketID].FaitityNumber+"///"+sockettofac[SocketID].SocketID);
 				
@@ -179,6 +256,9 @@ public class SocketTest extends Thread{
 						connect = false;
 						break;
 					}
+					////////////////////////////////////////////////////////////////////
+					//////接下来发送数据都是为了检测发送数据的正确性
+					///////////////////////////////////////////////////////////////////
 					try										//捕获发送字节时候的异常
 					{
 						osTemplet.write(getData);			//向客户端发送数据
@@ -191,14 +271,24 @@ public class SocketTest extends Thread{
 						System.out.println("Broken in 4.1");
 					}
 					
-					//更新设备状态，如果表里面没有就增加一项
+					//更新设备状态，如果表里面没有就增加一项，由于用户不可能在第一条数据发上来的时候就去看设备是否在线的状态，所以在这里正价设备在线状态时也是可以的
 					try {
+						System.out.println("Chaneg Table HaveAccess");
 						FacilityEworldState fstateTempl = new FacilityEworldState();
 						fstateTempl.setOnline(false);
-						fstateTempl.seteId(Integer.toHexString((int)sockettofac[SocketID].FaitityNumber));
-						fsdao.ChangeToOnline(fstateTempl);
+						fstateTempl.seteId(String.format("%08x",(int)sockettofac[SocketID].FaitityNumber));
+						
+						//如果查到表中有相应的设备
+						if(fsdao.SelectFac(fstateTempl))
+						{
+							fsdao.ChangeToOnline(fstateTempl);
+							fsdao.ChangeRecentTime(fstateTempl);
+						}
+						else
+						{
+							fsdao.AddFacWithOnline(fstateTempl);
+						}
 					} catch (Exception e) {
-						// TODO Auto-generated catch block
 						e.printStackTrace();
 					}
 
@@ -218,7 +308,7 @@ public class SocketTest extends Thread{
 			//////////////////////////////////
 			FacilityEworldState fstateTempl = new FacilityEworldState();
 			fstateTempl.setOnline(false);
-			fstateTempl.seteId(Integer.toHexString((int)sockettofac[SocketID].FaitityNumber));
+			fstateTempl.seteId(String.format("%08x",(int)sockettofac[SocketID].FaitityNumber));
 			
 			/*
 			 * 操作数据库,改变设备状态为下线

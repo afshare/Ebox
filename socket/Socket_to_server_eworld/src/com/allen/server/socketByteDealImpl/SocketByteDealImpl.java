@@ -52,6 +52,8 @@ public class SocketByteDealImpl implements SocketByteDeal {
 //		System.out.println(Integer.toHexString((int)bstream[0]));	
 		
 		System.out.println(Integer.toBinaryString(eType));
+		//String 规整成对应的格式，补全8个数
+		String EidString = String.format("%08x", eId);
 		switch((eType))
 		{
 			
@@ -60,7 +62,11 @@ public class SocketByteDealImpl implements SocketByteDeal {
 					decimalData = (float) ((bstream[7]&0xff)+(bstream[8]&0xff)/Math.pow(10,i));//获得float的小数值
 					
 					EworldTemperayure et = new EworldTemperayure();
-					et.seteId(Integer.toHexString(eId));
+//					et.seteId(Integer.toHexString(eId));
+
+
+					et.seteId(EidString);
+					
 					et.seteType(eType);
 					et.seteData(decimalData);
 					et.setePower(ePower);
@@ -77,7 +83,9 @@ public class SocketByteDealImpl implements SocketByteDeal {
 					decimalData = (float) ((bstream[7]&0xff)+(bstream[8]&0xff)/Math.pow(10,i));//获得float的小数值
 					
 					EworldHumidity eh = new EworldHumidity();
-					eh.seteId(Integer.toHexString(eId));
+					eh.seteId(EidString);
+					//String 规整成对应的格式，补全8个数
+					
 					eh.seteData(decimalData);
 					eh.setePower(ePower);
 					/////////////////////////
@@ -94,7 +102,7 @@ public class SocketByteDealImpl implements SocketByteDeal {
 			case eIdCO2:							//CO2
 				
 				EworldCO2 eco2 = new EworldCO2();
-				eco2.seteId(Integer.toHexString(eId));
+				eco2.seteId(EidString);
 				eco2.seteData(intData);
 				eco2.setePower(ePower);
 				
@@ -112,7 +120,7 @@ public class SocketByteDealImpl implements SocketByteDeal {
 				decimalData = (float) ((bstream[7]&0xff)+(float)(bstream[8]&0xff)/100);//获得float的小数值
 				
 				EworldDust edust = new EworldDust();
-				edust.seteId(Integer.toHexString(eId));
+				edust.seteId(EidString);
 				edust.seteData(decimalData);
 				edust.setePower(ePower);
 				/////////////////////////
@@ -131,7 +139,7 @@ public class SocketByteDealImpl implements SocketByteDeal {
 				decimalData = (float) ((bstream[7]&0xff)+(bstream[8]&0xff)/100);//获得float的小数值
 				
 				EworldFormaldehyde eFormal = new EworldFormaldehyde();
-				eFormal.seteId(Integer.toHexString(eId));
+				eFormal.seteId(EidString);
 				eFormal.seteData(decimalData);
 				eFormal.setePower(ePower);
 				/////////////////////////

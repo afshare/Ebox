@@ -3,8 +3,7 @@ package com.allen.server.socketManagerImpl;
 import java.io.IOException;
 import java.io.OutputStream;
 
-import com.allen.dao.socketDao.SocketDao;
-import com.allen.model.Eworld;
+
 import com.allen.model.OrderEworld;
 import com.allen.server.socketByteDeal.SocketByteDeal;
 import com.allen.server.socketByteDealImpl.SocketByteDealImpl;
@@ -15,7 +14,6 @@ import com.allen.dao.socketDaoImpl.OrderDaoImpl;
 public class SocketManagerImpl implements SocketManager {
 	
 
-	private SocketDao skDao;
 	@Override
 	public boolean Add(byte[] bstream,int socketID) throws Exception {
 		
@@ -160,7 +158,7 @@ public class SocketManagerImpl implements SocketManager {
 	@Override
 	public boolean GiveOrder() {
 		//打印进入该函数的标志
-		System.out.println("Get into UserOrder");
+//		System.out.println("Get into UserOrder");
 		
 		//进入OrderDao读取ordermodel
 		OrderDao orderdaotem = new OrderDaoImpl();
@@ -168,11 +166,11 @@ public class SocketManagerImpl implements SocketManager {
 		//new一个order模型，用于存储设别号和命令
 		OrderEworld orderemodel = new OrderEworld();
 		
-		//进行数据的读取
+		//进行数据的读取，和发送命令，然后改变命令发送状态
 		try {
 			orderemodel = orderdaotem.GiveOrder();
+			orderdaotem.ChangeOrderState();						//改变Order表的状态
 		} catch (Exception e1) {
-			// TODO Auto-generated catch block
 			e1.printStackTrace();
 		}
 		
@@ -190,7 +188,7 @@ public class SocketManagerImpl implements SocketManager {
 		}
 		if(SockIDTemplet == getsocket.SocketTest.counterSocket)//如果没有搜索到对应的设备号,也就是循环之后设变编号下标扫描数值超过了已有的设备数号
 		{
-			System.out.println("Order Fail_1111111111111111111111111111");
+			System.out.println("Order Fail");
 			return false;//发送命令失败,因为没有这样的设备号连接进来
 		}
 		//////////////////////////////
@@ -218,6 +216,7 @@ public class SocketManagerImpl implements SocketManager {
 		/////////////////////////////////////////////////////////////////////////
 		try										//捕获发送字节时候的异常
 		{
+			System.out.println("The Order is"+orderemodel.getOrder());
 			osTemplet.write(orderemodel.getOrder());			//向客户端发送数据
 			osTemplet.flush();
 		}
@@ -227,6 +226,11 @@ public class SocketManagerImpl implements SocketManager {
 			return false;
 		}
 		return true;//顺利完成之后就返回
+	}
+	@Override
+	public boolean AddtheFacWithOnline() {
+
+		return false;
 	}
 
 
